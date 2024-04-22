@@ -73,3 +73,12 @@ export function getPathInputRequiredCheck(name: string): string {
 
     return input
 }
+
+export function getVariableRequired(name: string): string {
+    const variable = getVariable(name)
+    if (!variable) {
+        throw new Error(`Unreachable code, required variable '${name}' returned undefined!`)
+    }
+
+    return variable
+}
