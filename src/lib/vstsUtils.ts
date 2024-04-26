@@ -4,6 +4,7 @@
  */
 
 import { getInput, getPathInput, getVariable, warning } from 'azure-pipelines-task-lib/task'
+import * as azdev from "azure-devops-node-api"
 import * as semver from 'semver'
 
 export interface VSTSManifestVersionInfo {
@@ -81,4 +82,22 @@ export function getVariableRequired(name: string): string {
     }
 
     return variable
+}
+
+export async function getOidcTokenForEndpoint(endpoint_name: string): Promise<string> {
+    const jobId = getVariableRequired("System.JobId");
+    const planId = getVariableRequired("System.PlanId");
+    const projectId = getVariableRequired("System.TeamProjectId");
+    const hub = getVariableRequired("System.HostType");
+    const uri = getVariableRequired("System.CollectionUri");
+    const token = getVariableRequired("System.AccessToken");
+
+    const auth = azdev.getBasicHandler('', token);
+    const connection = new azdev.WebApi(uri, auth);
+    const api = await connection.getTaskApi();
+    const response = await api.createOidcToken({}, projectId, hub, planId, jobId, endpoint_name);
+    if (!response.oidcToken) {
+        throw new Error('Invalid createOidcToken response, no oidcToken.');
+    }
+    return response.oidcToken;
 }

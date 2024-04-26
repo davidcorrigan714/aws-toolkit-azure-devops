@@ -9,9 +9,8 @@ import { STS } from 'aws-sdk/clients/all'
 import * as AWS from 'aws-sdk/global'
 import { HttpsProxyAgent } from 'https-proxy-agent'
 import { format, parse, Url } from 'url'
-import * as azdev from "azure-devops-node-api"
 import { bool } from 'aws-sdk/clients/signer'
-import { getVariableRequired } from './vstsUtils'
+import { getOidcTokenForEndpoint } from './vstsUtils'
 
 // Task variable names that can be used to supply the AWS credentials
 // to a task (in addition to using a service endpoint, or environment
@@ -113,7 +112,7 @@ function getEndpointAuthInfo(awsparams: AWSConnectionParameters, endpointName: s
 
     if (endpointUsesOidcAuthScheme) {
         // The "role" parameter name was chosen for OIDC because that parameter
-        // name is whitelisted from being scrubbed from the build logs.
+        // name is whitelisted from being masked out in build logs.
         assumeRoleArn = awsparams.awsEndpointAuth?.parameters?.role
     }
     return {
@@ -250,18 +249,10 @@ async function createEndpointCredentials(
     }
 
     if (useOidc) {
-        const jobId = getVariableRequired("System.JobId");
-        const planId = getVariableRequired("System.PlanId");
-        const projectId = getVariableRequired("System.TeamProjectId");
-        const hub = getVariableRequired("System.HostType");
-        const uri = getVariableRequired("System.CollectionUri");
-        const token = getVariableRequired("System.AccessToken");
-
-        const auth = azdev.getBasicHandler('', token);
-        const connection = new azdev.WebApi(uri, auth);
-        const api = await connection.getTaskApi();
-        const response = await api.createOidcToken({}, projectId, hub, planId, jobId, endpointName);
-        const oidcToken = response.oidcToken || '';
+        if (!endpointName) {
+            throw new Error('No endpoint name provided for OIDC token retrieval')
+        }
+        const oidcToken = await getOidcTokenForEndpoint(endpointName);
         const oidcTokenParts = oidcToken.split('.');
         if (oidcTokenParts.length !== 3) {
             throw new Error('Invalid oidc token');

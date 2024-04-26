@@ -1,7 +1,7 @@
 {
     "manifestVersion": 1,
     "id": "aws-vsts-tools",
-    "version": "1.1.8",
+    "version": "1.2.0",
     "name": "AWS Toolkit for Azure DevOps",
     "scopes": [
         "vso.build",
@@ -250,16 +250,6 @@
                     {
                         "type": "ms.vss-endpoint.endpoint-auth-scheme-none",
                         "displayName": "Azure DevOps OIDC (Services only)",
-                        "properties": {
-                            "constraints": [
-                                {
-                                    "name": "ExecutionEnvironment",
-                                    "properties": {
-                                        "hosted": true
-                                    }
-                                }
-                            ]
-                        },
                         "inputDescriptors": [
                             {
                                 "id": "role",
